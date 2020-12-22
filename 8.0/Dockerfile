@@ -3,7 +3,7 @@
 ######################
 
 # Base image with alias
-FROM php:7.4-fpm-alpine as base
+FROM php:8-fpm-alpine as base
 
 ENV APCU_VERSION 5.1.19
 ENV TZ=Europe/Paris
@@ -149,14 +149,3 @@ COPY --from=phpopencv /usr/local/share/opencv4/* /usr/local/share/opencv4/
 RUN ln -s /usr/local/share/opencv4/* /usr/share/OpenCV/
 
 WORKDIR /srv
-
-
-
-#sudo mkdir -p /etc/ld.so.conf.d/
-#sudo cp ./etc/ld.so.conf.d/opencv.conf /etc/ld.so.conf.d/
-#sudo mkdir -p /etc/opt/rh/rh-php72/php.d/
-#sudo cp ./etc/opt/rh/rh-php72/php.d/opencv.ini /etc/opt/rh/rh-php72/php.d/
-#sudo mkdir -p /opt/rh/rh-php72/root/usr/lib64/php/modules/
-#sudo cp ./opt/rh/rh-php72/root/usr/lib64/php/modules/opencv.so /opt/rh/rh-php72/root/usr/lib64/php/modules/
-
-#php -i | grep opencv
