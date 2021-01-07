@@ -28,9 +28,10 @@ RUN apk add --no-cache \
          && \
     apk add --no-cache --virtual .build-deps  \
         $PHPIZE_DEPS \
-        php7-dev \
         icu-dev \
          && \
+    apk update --repository http://dl-cdn.alpinelinux.org/alpine/edge/community && \
+    apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/community php8-dev && \
     docker-php-ext-install intl \
     	zip && \
     pecl install apcu-${APCU_VERSION} && \
@@ -44,8 +45,13 @@ RUN apk add --no-cache \
     docker-php-ext-install soap && \
     pecl install xdebug && \
     docker-php-ext-enable xdebug && \
-    pecl install imagick  && \
-    docker-php-ext-enable imagick && \
+    cd /opt && \
+    git clone https://github.com/Imagick/imagick && \
+    cd imagick && \
+    phpize && ./configure && \
+    make && \
+    make install && \
+    cd ..  && \
     apk del .build-deps icu-dev $PHPIZE_DEPS zlib-dev  && \
     apk add gosu --update --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ --allow-untrusted && \
     addgroup bar && \
@@ -107,17 +113,19 @@ RUN export PKG_CONFIG=/usr/bin/pkg-config && export PKG_CONFIG_PATH=$PKG_CONFIG_
 # PHP Opencv image with alias
 FROM opencv as phpopencv
 
-RUN apk add --no-cache php7-dev && \
+RUN apk update --repository http://dl-cdn.alpinelinux.org/alpine/edge/community && \
+  apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/community php8-dev && \
 	export PKG_CONFIG=/usr/bin/pkg-config && export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib64/pkgconfig/ && export LD_LIBRARY_PATH="/usr/local/lib64/" && \
     cd /opt && \
     git clone https://github.com/php-opencv/php-opencv.git && \
     cd php-opencv && \
     phpize && \
-    ./configure --with-php-config=/usr/bin/php-config && \
-    make && make test && make install && \
+    ./configure --with-php-config=/usr/bin/php-config8 && \
+    make && make install && \
     cd ../ && \
     rm -R php-opencv && \
-    apk del php7-dev
+    apk del php8-dev
+    #&& make test
 
 
 ######################
@@ -139,9 +147,10 @@ RUN mkdir -p /usr/local/bin/ && \
 	mkdir -p /usr/local/lib64/ && \
 	mkdir -p /usr/share/OpenCV/ && \
 	mkdir -p /usr/local/share/opencv4/ && \
-    echo "extension=/usr/lib/php7/modules/opencv.so" > /usr/local/etc/php/conf.d/opencv.ini
+    echo "extension=/usr/lib/php8/modules/opencv.so" > /usr/local/etc/php/conf.d/opencv.ini && \
+    echo "extension=/usr/lib/php8/modules/opencv.so" > /etc/php8/conf.d/opencv.ini
 
-COPY --from=phpopencv /usr/lib/php7/modules/opencv.so /usr/lib/php7/modules/opencv.so
+COPY --from=phpopencv /usr/lib/php8/modules/opencv.so /usr/lib/php8/modules/opencv.so
 COPY --from=phpopencv /usr/local/bin/* /usr/local/bin/
 COPY --from=phpopencv /usr/local/lib64/* /usr/local/lib64/
 COPY --from=phpopencv /usr/local/share/opencv4/* /usr/local/share/opencv4/

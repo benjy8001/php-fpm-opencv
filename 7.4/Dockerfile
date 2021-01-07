@@ -107,11 +107,13 @@ RUN export PKG_CONFIG=/usr/bin/pkg-config && export PKG_CONFIG_PATH=$PKG_CONFIG_
 # PHP Opencv image with alias
 FROM opencv as phpopencv
 
-RUN apk add --no-cache php7-dev && \
+RUN apk update --repository http://dl-cdn.alpinelinux.org/alpine/edge/community && \
+  apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/community php7-dev && \
 	export PKG_CONFIG=/usr/bin/pkg-config && export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib64/pkgconfig/ && export LD_LIBRARY_PATH="/usr/local/lib64/" && \
     cd /opt && \
     git clone https://github.com/php-opencv/php-opencv.git && \
     cd php-opencv && \
+    git checkout php7.4 && \
     phpize && \
     ./configure --with-php-config=/usr/bin/php-config && \
     make && make test && make install && \
@@ -149,14 +151,3 @@ COPY --from=phpopencv /usr/local/share/opencv4/* /usr/local/share/opencv4/
 RUN ln -s /usr/local/share/opencv4/* /usr/share/OpenCV/
 
 WORKDIR /srv
-
-
-
-#sudo mkdir -p /etc/ld.so.conf.d/
-#sudo cp ./etc/ld.so.conf.d/opencv.conf /etc/ld.so.conf.d/
-#sudo mkdir -p /etc/opt/rh/rh-php72/php.d/
-#sudo cp ./etc/opt/rh/rh-php72/php.d/opencv.ini /etc/opt/rh/rh-php72/php.d/
-#sudo mkdir -p /opt/rh/rh-php72/root/usr/lib64/php/modules/
-#sudo cp ./opt/rh/rh-php72/root/usr/lib64/php/modules/opencv.so /opt/rh/rh-php72/root/usr/lib64/php/modules/
-
-#php -i | grep opencv
