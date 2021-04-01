@@ -33,8 +33,10 @@ all: build push_image
 ## build image and tags it
 build:
 	@for php_version in $(PHP_VERSIONS); do \
-		docker build -f $$php_version/Dockerfile . -t ${REGISTRY_DOMAIN}${IMAGE_PATH}-$$php_version:${VERSION}; \
+		docker build --target fpm-prod -f php-fpm/$$php_version/Dockerfile ./php-fpm/$$php_version -t ${REGISTRY_DOMAIN}${IMAGE_PATH}-$$php_version:${VERSION}; \
 	done
+
+	docker build  httpf/Dockerfile ./httpd -t ${REGISTRY_DOMAIN}${IMAGE_PATH}-httpd
 
 ## login on registry
 registry_login:
@@ -45,3 +47,4 @@ push_image: registry_login
 	for php_version in $(PHP_VERSIONS); do \
 		docker push ${REGISTRY_DOMAIN}${IMAGE_PATH}-$$php_version:${VERSION}; \
 	done
+	docker push ${REGISTRY_DOMAIN}${IMAGE_PATH}-httpd

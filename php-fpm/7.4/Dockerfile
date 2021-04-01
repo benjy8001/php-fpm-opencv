@@ -133,9 +133,9 @@ LABEL org.label-schema.name="opencv" \
       org.label-schema.url="" \
       org.label-schema.usage="" \
       org.label-schema.vcs-url="" \
-      org.label-schema.vendor="Business&Decision" \
+      org.label-schema.vendor="benjy8001" \
       org.label-schema.version="4.4.1" \
-      maintainer="Business&Decision"
+      maintainer="benjy8001"
 
 RUN mkdir -p /usr/local/bin/ && \
 	mkdir -p /usr/local/lib64/ && \

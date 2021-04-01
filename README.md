@@ -4,7 +4,7 @@
 
 ### Easy installation
 ```
-make buil
+make build
 ```
 
 

@@ -3,7 +3,7 @@
 ######################
 
 # Base image with alias
-FROM php:8-fpm-alpine as base
+FROM php:8.0-fpm-alpine as base
 
 ENV APCU_VERSION 5.1.19
 ENV TZ=Europe/Paris
@@ -113,12 +113,12 @@ RUN export PKG_CONFIG=/usr/bin/pkg-config && export PKG_CONFIG_PATH=$PKG_CONFIG_
 # PHP Opencv image with alias
 FROM opencv as phpopencv
 
-RUN apk update --repository http://dl-cdn.alpinelinux.org/alpine/edge/community && \
-  apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/community php8-dev && \
+RUN apk add --no-cache php-dev && \
 	export PKG_CONFIG=/usr/bin/pkg-config && export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib64/pkgconfig/ && export LD_LIBRARY_PATH="/usr/local/lib64/" && \
     cd /opt && \
     git clone https://github.com/php-opencv/php-opencv.git && \
     cd php-opencv && \
+    git checkout php8-dev && \
     phpize && \
     ./configure --with-php-config=/usr/bin/php-config8 && \
     make && make install && \
@@ -139,9 +139,9 @@ LABEL org.label-schema.name="opencv" \
       org.label-schema.url="" \
       org.label-schema.usage="" \
       org.label-schema.vcs-url="" \
-      org.label-schema.vendor="Business&Decision" \
+      org.label-schema.vendor="benjy8001" \
       org.label-schema.version="4.4.1" \
-      maintainer="Business&Decision"
+      maintainer="benjy8001"
 
 RUN mkdir -p /usr/local/bin/ && \
 	mkdir -p /usr/local/lib64/ && \

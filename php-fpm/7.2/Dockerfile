@@ -1,12 +1,27 @@
-######################
-##### Base stage #####
-######################
+# ---------------------------------------------- Build Time Arguments --------------------------------------------------
+ARG PHP_VERSION="7.2"
+ARG ALPINE_VERSION="3.9"
+ARG APCU_VERSION="5.1.12"
+ARG TZ="Europe/Paris"
+ARG OPENCV_VERSION="4.1.1"
 
-# Base image with alias
-FROM php:7.3-fpm-alpine as base
+# ======================================================================================================================
+#                                                   --- Base ---
+# ---------------  This stage install needed extenstions, plugins and add all needed configurations  -------------------
+# ======================================================================================================================
+FROM php:${PHP_VERSION}-fpm-alpine${ALPINE_VERSION} as base
 
-ENV APCU_VERSION 5.1.17
-ENV TZ=Europe/Paris
+LABEL org.label-schema.name="opencv" \
+      org.label-schema.description="Small OpenCV (Open Source Computer Vision Library) Docker Image for PHP 7.2 Alpine Linux" \
+      org.label-schema.url="" \
+      org.label-schema.usage="" \
+      org.label-schema.vcs-url="" \
+      org.label-schema.vendor="benjy8001" \
+      org.label-schema.version="4.1.1" \
+      maintainer="benjy8001"
+
+ARG APCU_VERSION
+ARG TZ
 
 RUN apk add --no-cache \
         ca-certificates \
@@ -34,16 +49,14 @@ RUN apk add --no-cache \
     docker-php-ext-install intl \
     	zip && \
     pecl install apcu-${APCU_VERSION} && \
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
-    echo $TZ > /etc/timezone && \
+    ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && \
+    echo ${TZ} > /etc/timezone && \
     docker-php-ext-enable apcu && \
     docker-php-ext-enable opcache && \
     docker-php-ext-install mysqli pdo pdo_mysql && \
     docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ && \
     docker-php-ext-install gd && \
     docker-php-ext-install soap && \
-    pecl install xdebug && \
-    docker-php-ext-enable xdebug && \
     pecl install imagick  && \
     docker-php-ext-enable imagick && \
     apk del .build-deps icu-dev $PHPIZE_DEPS zlib-dev  && \
@@ -51,19 +64,16 @@ RUN apk add --no-cache \
     addgroup bar && \
     adduser -D -h /home -s /bin/sh -G bar foo
 
-
-######################
-##### Opencv stage #####
-######################
-
-# Opencv image with alias
+# ======================================================================================================================
+#                                               --- Opencv stage ---
+# ----------------------------------  This stage will compile and install Opencv  --------------------------------------
+# ======================================================================================================================
 FROM base as opencv
-
-#ENV OPENCV_VERSION 4.5.0
-ENV OPENCV_VERSION 4.1.1
 
 RUN apk add --no-cache --virtual .build-deps \
     curl-dev zlib-dev openssl-dev build-base cmake linux-headers git autoconf
+
+ARG OPENCV_VERSION
 
 # Dl opencv
 RUN cd /opt && \
@@ -100,12 +110,10 @@ RUN export PKG_CONFIG=/usr/bin/pkg-config && export PKG_CONFIG_PATH=$PKG_CONFIG_
     rm -R opencv-${OPENCV_VERSION} && \
     rm -R opencv_contrib-${OPENCV_VERSION}
 
-
-######################
-##### PHP Opencv stage #####
-######################
-
-# PHP Opencv image with alias
+# ======================================================================================================================
+#                                              --- PHP Opencv stage ---
+# ----------------------------  This stage will compile and install php-opencv library.  -------------------------------
+# ======================================================================================================================
 FROM opencv as phpopencv
 
 RUN apk add --no-cache php7-dev && \
@@ -113,6 +121,7 @@ RUN apk add --no-cache php7-dev && \
     cd /opt && \
     git clone https://github.com/php-opencv/php-opencv.git && \
     cd php-opencv && \
+    git checkout f02a950ba43794a62e12b9a1ad09d04d7d232b72 && \
     phpize && \
     ./configure --with-php-config=/usr/bin/php-config && \
     make && make test && make install && \
@@ -121,20 +130,12 @@ RUN apk add --no-cache php7-dev && \
     apk del php7-dev
 
 
-######################
-##### Release stage #####
-######################
-# Release image with alias
-FROM base as release
-
-LABEL org.label-schema.name="opencv" \
-      org.label-schema.description="Small OpenCV (Open Source Computer Vision Library) Docker Image for PHP 7.2 Alpine Linux" \
-      org.label-schema.url="" \
-      org.label-schema.usage="" \
-      org.label-schema.vcs-url="" \
-      org.label-schema.vendor="Business&Decision" \
-      org.label-schema.version="4.4.1" \
-      maintainer="Business&Decision"
+# ======================================================================================================================
+# ===========================================  PRODUCTION FINAL STAGES  ================================================
+#                                                   --- PROD ---
+# ======================================================================================================================
+# ------------------------------------------------------ FPM -----------------------------------------------------------
+FROM base as fpm-prod
 
 RUN mkdir -p /usr/local/bin/ && \
 	mkdir -p /usr/local/lib64/ && \
@@ -146,7 +147,30 @@ COPY --from=phpopencv /usr/lib/php7/modules/opencv.so /usr/lib/php7/modules/open
 COPY --from=phpopencv /usr/local/bin/* /usr/local/bin/
 COPY --from=phpopencv /usr/local/lib64/* /usr/local/lib64/
 COPY --from=phpopencv /usr/local/share/opencv4/* /usr/local/share/opencv4/
+COPY config/*.ini /usr/local/etc/php/conf.d/
+COPY entrypoint.sh /entrypoint
 
-RUN ln -s /usr/local/share/opencv4/* /usr/share/OpenCV/
+RUN ln -s /usr/local/share/opencv4 /usr/share/OpenCV/haarcascades && \
+    chmod +x /entrypoint
 
 WORKDIR /srv
+
+ENTRYPOINT ["/entrypoint"]
+
+# ======================================================================================================================
+# ==========================================  DEVELOPMENT FINAL STAGES  ================================================
+#                                                    --- DEV ---
+# ======================================================================================================================
+
+# ------------------------------------------------------ FPM -----------------------------------------------------------
+FROM fpm-prod as fpm-dev
+
+# Xdebug
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS	&& \
+    pecl install xdebug										&& \
+    docker-php-ext-enable xdebug							&& \
+    apk del -f .build-deps
+
+WORKDIR /srv
+
+ENTRYPOINT ["/entrypoint"]

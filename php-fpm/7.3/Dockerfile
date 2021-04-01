@@ -3,9 +3,9 @@
 ######################
 
 # Base image with alias
-FROM php:7.2-fpm-alpine3.9 as base
+FROM php:7.3-fpm-alpine as base
 
-ENV APCU_VERSION 5.1.12
+ENV APCU_VERSION 5.1.17
 ENV TZ=Europe/Paris
 
 RUN apk add --no-cache \
@@ -59,6 +59,7 @@ RUN apk add --no-cache \
 # Opencv image with alias
 FROM base as opencv
 
+#ENV OPENCV_VERSION 4.5.0
 ENV OPENCV_VERSION 4.1.1
 
 RUN apk add --no-cache --virtual .build-deps \
@@ -112,6 +113,7 @@ RUN apk add --no-cache php7-dev && \
     cd /opt && \
     git clone https://github.com/php-opencv/php-opencv.git && \
     cd php-opencv && \
+    git checkout php7.3 && \
     phpize && \
     ./configure --with-php-config=/usr/bin/php-config && \
     make && make test && make install && \
@@ -131,9 +133,9 @@ LABEL org.label-schema.name="opencv" \
       org.label-schema.url="" \
       org.label-schema.usage="" \
       org.label-schema.vcs-url="" \
-      org.label-schema.vendor="Business&Decision" \
+      org.label-schema.vendor="benjy8001" \
       org.label-schema.version="4.4.1" \
-      maintainer="Business&Decision"
+      maintainer="benjy8001"
 
 RUN mkdir -p /usr/local/bin/ && \
 	mkdir -p /usr/local/lib64/ && \
