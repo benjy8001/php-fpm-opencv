@@ -126,7 +126,7 @@ RUN apk update --repository http://dl-cdn.alpinelinux.org/alpine/edge/community 
 ##### Release stage #####
 ######################
 # Release image with alias
-FROM base as release
+FROM base as fpm-prod
 
 LABEL org.label-schema.name="opencv" \
       org.label-schema.description="Small OpenCV (Open Source Computer Vision Library) Docker Image for PHP 7.2 Alpine Linux" \

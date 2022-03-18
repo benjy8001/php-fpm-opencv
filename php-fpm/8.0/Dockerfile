@@ -132,7 +132,7 @@ RUN apk add --no-cache php-dev && \
 ##### Release stage #####
 ######################
 # Release image with alias
-FROM base as release
+FROM base as fpm-prod
 
 LABEL org.label-schema.name="opencv" \
       org.label-schema.description="Small OpenCV (Open Source Computer Vision Library) Docker Image for PHP 7.2 Alpine Linux" \
