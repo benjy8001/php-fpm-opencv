@@ -36,7 +36,7 @@ build:
 		docker build --target fpm-prod -f php-fpm/$$php_version/Dockerfile ./php-fpm/$$php_version -t ${REGISTRY_DOMAIN}${IMAGE_PATH}-$$php_version:${VERSION}; \
 	done
 
-	docker build  httpf/Dockerfile ./httpd -t ${REGISTRY_DOMAIN}${IMAGE_PATH}-httpd
+	docker build -f httpd/Dockerfile ./httpd -t ${REGISTRY_DOMAIN}${IMAGE_PATH}-httpd
 
 ## login on registry
 registry_login:
