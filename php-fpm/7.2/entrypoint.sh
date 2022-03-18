@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 # Recupération de l'utilisateur et groupe courant
 uid=$(stat -c %u /srv)
@@ -34,7 +34,46 @@ function fixDirectoryPermissions()
     done
 }
 
+function update_elastic_agent_config_file() {
+  if [ -e /usr/local/etc/php/conf.d/99-elastic-apm-custom.ini ]; then
+    sed -i "/;$1.*/c $1 = $2" /usr/local/etc/php/conf.d/99-elastic-apm-custom.ini
+  fi
+}
+
+function config_apm_elastic (){
+  if [ "true" == "$ELASTIC_APM_ENABLED" ]; then
+      echo "ELK APM is enabled"
+      ELK_APM_ENV=${APP_MODE}
+      if [ ! -z "$ELASTIC_APM_ENVIRONMENT" ]; then
+        ELK_APM_ENV=${ELASTIC_APM_ENVIRONMENT}
+
+      fi
+      update_elastic_agent_config_file "elastic_apm.environnement" "${ELK_APM_ENV}"
+      echo "ELK APM ENV is setting to ${ELK_APM_ENV}"
+      update_elastic_agent_config_file "elastic_apm.server_url" "${ELASTIC_APM_SERVER_URL}"
+      echo "ELK APM URL is setting to ${ELASTIC_APM_SERVER_URL}"
+      update_elastic_agent_config_file "elastic_apm.secret_token" "${ELASTIC_APM_SECRET_TOKEN}"
+      echo "ELK APM SERVICE NAME is setting to ${ELASTIC_APM_SERVICE_NAME}"
+      update_elastic_agent_config_file "elastic_apm.service_name" "${ELASTIC_APM_SERVICE_NAME}"
+
+      LOG_LEVEL="INFO"
+      if [ "prod" == $ELK_APM_ENV ]; then
+        LOG_LEVEL= "ERROR"
+      fi
+      if [ ! -z "$ELASTIC_APM_LOG_LEVEL" ]; then
+          LOG_LEVEL=${ELASTIC_APM_LOG_LEVEL}
+          update_elastic_agent_config_file "elastic_apm.log_level" "${ELASTIC_APM_LOG_LEVEL}"
+      fi
+      update_elastic_agent_config_file "elastic_apm.log_level" ${LOG_LEVEL}
+      echo "ELK APM LOG_LEVEL is setting to ${ELASTIC_APM_SERVICE_NAME}"
+  else
+      update_elastic_agent_config_file "elastic_apm.enabled" "false"
+      echo "ELK APM is disabled"
+  fi
+}
+
 dotenv
+config_apm_elastic
 
 # Si on a activé 'utilisation de XDEBUG on le configure pour PHP
 if [ "enabled" == "$APP_XDEBUG" ]; then
@@ -59,7 +98,7 @@ if [ $uid == 0 ] && [ $gid == 0 ]; then
     fi
 fi
 
-echo 'Environnement is :'$SEL_APP_MODE
+echo 'Environnement is :'$APP_MODE
 # don't use \d with sed, it is not digits but the special char like \r\n :) or use perl but perl is not present everywhere.
 sed -i -r "s/$user:x:[[:digit:]]+:[[:digit:]]+:/$user:x:$uid:$gid:/g" /etc/passwd
 sed -i -r "s/bar:x:[[:digit:]]+:/bar:x:$gid:/g" /etc/group
