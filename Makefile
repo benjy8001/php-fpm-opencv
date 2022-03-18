@@ -4,7 +4,7 @@ SHELL=/bin/sh
 ifndef VERBOSE
 .SILENT:
 endif
-PHP_VERSIONS := 7.2 7.3 7.4
+PHP_VERSIONS := 7.2 7.3
 PHP_VERSION ?= $(lastword $(sort $(PHP_VERSIONS)))
 COLOR_COMMENT=\033[0;32m
 IMAGE_PATH=/benjy80/php-fpm-opencv
