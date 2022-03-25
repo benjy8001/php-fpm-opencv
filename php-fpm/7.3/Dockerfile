@@ -113,7 +113,7 @@ RUN apk add --no-cache php7-dev && \
     cd /opt && \
     git clone https://github.com/php-opencv/php-opencv.git && \
     cd php-opencv && \
-    git checkout php7.3 && \
+    git checkout eeb64726981886f21e8c7ce0e4db94fbf20ebe56 && \
     phpize && \
     ./configure --with-php-config=/usr/bin/php-config && \
     make && make test && make install && \
