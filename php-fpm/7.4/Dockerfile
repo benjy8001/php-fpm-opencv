@@ -1,6 +1,6 @@
 # ---------------------------------------------- Build Time Arguments --------------------------------------------------
 ARG PHP_VERSION="7.4"
-ARG ALPINE_VERSION="3.9"
+ARG ALPINE_VERSION="3.14"
 ARG APCU_VERSION="5.1.17"
 ARG APCU_BC_VERSION="1.0.5"
 ARG TZ="Europe/Paris"
