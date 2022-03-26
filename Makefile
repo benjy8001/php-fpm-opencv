@@ -72,3 +72,11 @@ build_73:
 ## push image
 push_73_image: registry_login
 	docker push ${REGISTRY_DOMAIN}${IMAGE_PATH}-7.3:${VERSION}
+
+## build image and tags it
+build_74:
+	docker build --target fpm-prod -f php-fpm/7.4/Dockerfile ./php-fpm/7.4 -t ${REGISTRY_DOMAIN}${IMAGE_PATH}-7.4:${VERSION}; \
+
+## push image
+push_74_image: registry_login
+	docker push ${REGISTRY_DOMAIN}${IMAGE_PATH}-7.4:${VERSION}
